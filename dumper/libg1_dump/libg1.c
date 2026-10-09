@@ -38,6 +38,9 @@ long sys_open(const char *filename, int flags, int mode);
 long sys_close(uint fd);
 ssize_t sys_read(uint fd, char *buf, size_t count);
 ssize_t sys_write(uint fd, const char *buf, size_t count);
+void OSTimeDly(unsigned short ticks);
+
+API(OSTimeDly,	SYSCALL_API_START, 16);
 
 API(sys_open,	SYSCALL_API_START, 68);
 API(sys_close,	SYSCALL_API_START, 69);
@@ -54,7 +57,7 @@ API(sys_write,	SYSCALL_API_START, 71);
 
 #define DISKA_LBA      0x22000
 #define DISKA_SECTORS  0x200000
-#define FILE_SECTORS   0x8000      /* 4 MiB in 512-byte sectors */
+#define FILE_SECTORS   0x8000      /* 16 MiB in 512-byte sectors */
 
 #define GFP_KERNEL	(__GFP_WAIT | __GFP_IO | __GFP_FS)
 
@@ -75,6 +78,14 @@ int (* brec_sector_read)(uint block, uint sector, void *buf);
 
 #define CHUNK 0x8000 // physical IO may have to reserve rather limited SRAM
 
+/* Yield every 512 KiB, plus at file boundaries. Tick duration is unknown. */
+#define YIELD_CHUNKS 16
+
+/* Zero keeps the full dump; the bounded test overrides this to one. */
+#ifndef DUMP_FILES_PER_LOAD
+#define DUMP_FILES_PER_LOAD 0
+#endif
+
 #define FW_LBA 0x20000 // /mnt/sdisk is only 0x12000 + 2x 0x2000
 
 void make_filename(char *nbuf, int num) {
@@ -83,16 +94,20 @@ void make_filename(char *nbuf, int num) {
   nbuf[16] = (num % 10) + '0';  
 }
 
-static int file_exists(const char *path)
+static int completed_marker(const char *path)
 {
     int fd;
+    char marker[3];
+    int valid;
 
     fd = sys_open(path, O_RDONLY, 0);
     if (fd < 0)
         return 0;
 
+    valid = sys_read(fd, marker, sizeof(marker)) == sizeof(marker) &&
+            marker[0] == 'O' && marker[1] == 'K' && marker[2] == '\n';
     sys_close(fd);
-    return 1;
+    return valid;
 }
 
 void __attribute__ ((section (".init"))) _init(void)
@@ -101,18 +116,24 @@ void __attribute__ ((section (".init"))) _init(void)
     int fd;
     int file_no;
     int start;
-    char *name = "/mnt/card/dump000.bin"; // 14, 15, 16
-    char *okname = "/mnt/card/dump000.ok"; // 14, 15, 16
+    char name[] = "/mnt/card/dump000.bin"; // 14, 15, 16
+    char okname[] = "/mnt/card/dump000.ok"; // 14, 15, 16
     uint done;
+    uint completed = 0;
 
     nand_adfu_read = kernel_sym("nand_adfu_read");
+    if (!nand_adfu_read)
+        return;
     buf = kmalloc(CHUNK, GFP_KERNEL);
+    if (!buf)
+        return;
 
     for (file_no = 0; file_no < DISKA_SECTORS / FILE_SECTORS; file_no++) {
       make_filename(name, file_no);    /* /mnt/card/dump000.bin etc. */
       make_filename(okname, file_no);    /* /mnt/card/dump000.bin etc. */
 
-      if (file_exists(okname)) {
+      if (completed_marker(okname)) {
+        OSTimeDly(1);
         continue;
       }
       
@@ -126,16 +147,29 @@ void __attribute__ ((section (".init"))) _init(void)
         nand_adfu_read(DISKA_LBA + start + done,
                        buf, CHUNK / 512);
         
-        if (sys_write(fd, buf, CHUNK) != CHUNK)
+        if (sys_write(fd, (const char *)buf, CHUNK) != CHUNK)
           break;
+        if (((done / (CHUNK / 512)) + 1) % YIELD_CHUNKS == 0)
+          OSTimeDly(1);
       }
       
       sys_close(fd);
+      OSTimeDly(1);
+      if (done != FILE_SECTORS)
+        break; /* Partial dump: do not create a completion marker. */
       fd = sys_open(okname, O_WRONLY | O_CREAT | O_TRUNC, 0666);
       if (fd < 0)
         break;
-      sys_write(fd, "OK\n", 3);
-      sys_close(fd);
+      {
+        ssize_t written = sys_write(fd, "OK\n", 3);
+        sys_close(fd);
+        OSTimeDly(1);
+        if (written != 3)
+          break; /* Short markers are rejected on the next run. */
+        completed++;
+        if (DUMP_FILES_PER_LOAD && completed >= DUMP_FILES_PER_LOAD)
+          break; /* Return to the loader rather than sleeping indefinitely. */
+      }
     }
     if (buf)
         kfree(buf);
