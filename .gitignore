@@ -1,0 +1,9 @@
+binaries
+dumper
+logs
+sdisk
+SYSCFG.SYS
+
+*~
+*#
+**/__pycache__

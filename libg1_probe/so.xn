@@ -1,0 +1,14 @@
+PHDRS { text PT_LOAD; data PT_LOAD; }
+SECTIONS {
+    .init : { KEEP(*(.init)) } :text
+    .text : { *(.text .text.*) *(.rodata .rodata.*) } :text
+    .fini : { KEEP(*(.fini)) } :text
+    .dlsym : { KEEP(*(.dlsym)) } :text
+    .dlstr : { KEEP(*(.dlstr)) } :text
+    . = ALIGN(0x1000);
+    .data : { *(.data .data.* .sdata .sdata.*) } :data
+    .sbss (NOLOAD) : { *(.sbss .sbss.* .scommon) } :data
+    .bss (NOLOAD) : { *(.bss .bss.*) *(COMMON) } :data
+    /DISCARD/ : { *(.reginfo .MIPS.abiflags .comment .note.* .pdr .eh_frame*) }
+}
+ENTRY(_init)
