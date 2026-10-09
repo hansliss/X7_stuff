@@ -1,7 +1,8 @@
 # NAND dump library with scheduler yields
 
-`libg1.c` is a NAND dumper for /mnt/diska, disguised as a NES emulator. Put
-it in the root of ActDisk and then run a NES game from the main system
+`libg1.c` is a NAND dumper for /mnt/diska, disguised as a NES emulator. It
+will dump the FAT image for /mnt/diska on /mnt/card, the SD card. Put
+libg1.so in the root of ActDisk and then run a NES game from the main system
 launcher. It will dump a couple of blocks and then return to the game menu.
 Back out and run it again. Do this 32 times, until you have 64 dump files.
 Concatenate those and you have the diska FAT image.
