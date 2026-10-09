@@ -1,6 +1,11 @@
 # NAND dump library with scheduler yields
 
-`libg1.c` is the replacement LIBG1 loader hook for the original NAND dumper.
+`libg1.c` is a NAND dumper for /mnt/diska, disguised as a NES emulator. Put
+it in the root of ActDisk and then run a NES game from the main system
+launcher. It will dump a couple of blocks and then return to the game menu.
+Back out and run it again. Do this 32 times, until you have 64 dump files.
+Concatenate those and you have the diska FAT image.
+
 It reads from LBA `0x22000` for `0x200000` sectors (1 GiB), producing 64 files
 `/mnt/card/dump000.bin` through `dump063.bin`, each **16 MiB**. The former
 4 MiB comment was incorrect: `FILE_SECTORS=0x8000`, with 512-byte sectors.
@@ -78,26 +83,14 @@ problem. This does not identify the expired registration, nor establish that
 NAND/SD calls blocked; the loader thread may itself be preventing required
 application callbacks from running.
 
-`build.sh` now also builds **libg1-onefile.so**, with
-`DUMP_FILES_PER_LOAD=1`. Install this in place of the loaded `libg1.so` using
-the same replacement route. Each invocation skips accepted old completion
-markers, dumps **one new 16 MiB file**, creates its marker, releases its buffer
+`build.sh` builds **libg1.so**, with `DUMP_FILES_PER_LOAD=2`.
+Each invocation skips accepted old completion markers, dumps
+**two new 16 MiB files**, creates their markers, releases its buffer
 and returns from `_init`. It does not launch a background task. Invoke again
-to advance to the next incomplete file. The original full `libg1.so` remains
-built with `DUMP_FILES_PER_LOAD=0` and is not claimed to avoid resets.
+to advance to the next incomplete file.
 
-The one-file version isolates whether returning from the loader promptly helps.
-It cannot guarantee survival of a single slow file or safe behavior of the
+This dumper cannot guarantee survival of a single slow file or safe behavior of the
 calling emulator after the minimal replacement module returns. If returning
-causes a loader/application failure, report that behavior as well as which
-`.bin` and `.ok` files were written. Both the full and one-file variants pass
-host mocks for completion, skips, short data writes and allocation/symbol
-failures; the bounded completion case checks exactly one new file. The new
-ELF retains the expected fixed entry and has no undefined symbols.
-
-A long-running asynchronous library worker would need a proven mechanism to
-keep its code loaded and integrate with the caller's lifecycle; returning from
-`_init` without that guarantee could unload code under the worker. A standalone
-`.app` dumper using the proven application/message-loop lifecycle is another
-candidate for finishing the whole dump in one session. Neither threaded-library
-lifetime nor standalone NAND dumping has been console verified yet.
+causes a loader/application failure, just continue anyway - since a failed
+block will cause the *.ok* file to be missing, the block will be retried on the
+next run.
