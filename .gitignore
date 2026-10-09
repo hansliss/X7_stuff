@@ -1,5 +1,4 @@
 binaries
-dumper
 logs
 sdisk
 SYSCFG.SYS
@@ -7,3 +6,4 @@ SYSCFG.SYS
 *~
 *#
 **/__pycache__
+codex_resume.sh

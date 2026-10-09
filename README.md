@@ -18,6 +18,10 @@ it was very useful during this investigation.*
 * [Filesystem console results](logs/sysprobe-results.md) and
   [watchdog findings](libg1_probe/README.md#watchdog-findings).
 
+The original [NAND dump hook](dumper/libg1_dump/README.md) also has scheduler
+yields during and between files. The full run still reset after three files;
+a separate one-file-per-load variant is available to test bounded loader work.
+
 ## Probe packages
 
 The two probe packages are:
