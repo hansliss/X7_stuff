@@ -1,4 +1,7 @@
-# X7 syscall probes
+# Action X7 handheld console syscall probes and other RE results
+*Here's example code, a couple of useful tools and lots of documentation. This was
+mostly created by Codex, under my guidance. So, apologies for the AI slop, but
+it was very useful during this investigation.*
 
 ## Documentation map
 
