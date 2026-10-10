@@ -72,7 +72,7 @@ static void animate(void *arg){
  render_frame(arg);
 #endif
 }
-static void timeout(void *arg){(void)arg;finish(2);}
+//static void timeout(void *arg){(void)arg;finish(2);}
 static void system_message(struct ui_app_message *msg){if(msg->type==1001)finish(3);}
 static int window_message(struct ui_message *msg){
  if(msg->msgid==13&&msg->data.key){
@@ -127,7 +127,7 @@ int ui_probe_run(int (*record)(const char *,x7_u64),int (*before)(const char *))
 #endif
  record("frame timer",(x7_u64)(x7_s64)frame_timer);if(frame_timer<0)goto out;
  if(!before("BEFORE exit timer 30000ms"))goto out;
- exit_timer=ui_set_timer(30000,timeout,0);record("exit timer",(x7_u64)(x7_s64)exit_timer);if(exit_timer<0)goto out;
+ //exit_timer=ui_set_timer(30000,timeout,0);record("exit timer",(x7_u64)(x7_s64)exit_timer);if(exit_timer<0)goto out;
  if(!before("BEFORE animation loop"))goto out;
  #ifdef PROBE_FAST
  start_ticks=OSTimeGet();animation_epoch=start_ticks;animation_clock_started=1;
