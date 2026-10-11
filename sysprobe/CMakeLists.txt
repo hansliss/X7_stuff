@@ -106,3 +106,22 @@ target_link_options(sysprobe-dodeca-fast PRIVATE "-Wl,--defsym=APP_BASE=${APP_BA
 add_custom_command(TARGET sysprobe-dodeca-fast POST_BUILD
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/check_app.py" "$<TARGET_FILE:sysprobe-dodeca-fast>"
     VERBATIM)
+
+add_executable(sysprobe-dodeca-fragment crt.c probe.c app_stubs.S fb_video.c dodeca_demo.c dodeca_render.c fragment.c ui_stubs.S hsv.c)
+target_compile_definitions(sysprobe-dodeca-fragment PRIVATE PROBE_UI=1 PROBE_DODECA=1 PROBE_FB=1 PROBE_FAST=1 PROBE_FRAGMENT=1)
+set_target_properties(sysprobe-dodeca-fragment PROPERTIES SUFFIX ".app")
+x7_probe_target(sysprobe-dodeca-fragment "${CMAKE_CURRENT_SOURCE_DIR}/app.xn")
+set_property(TARGET sysprobe-dodeca-fragment APPEND PROPERTY LINK_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/check_app.py")
+target_link_options(sysprobe-dodeca-fragment PRIVATE "-Wl,--defsym=APP_BASE=${APP_BASE}")
+add_custom_command(TARGET sysprobe-dodeca-fragment POST_BUILD
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/check_app.py" "$<TARGET_FILE:sysprobe-dodeca-fragment>"
+    VERBATIM)
+
+add_executable(sysprobe-audio crt.c probe.c app_stubs.S audio_probe.c audio_stubs.S ui_stubs.S)
+target_compile_definitions(sysprobe-audio PRIVATE PROBE_UI=1 PROBE_AUDIO=1)
+set_target_properties(sysprobe-audio PROPERTIES SUFFIX ".app")
+x7_probe_target(sysprobe-audio "${CMAKE_CURRENT_SOURCE_DIR}/app.xn")
+target_link_options(sysprobe-audio PRIVATE "-Wl,--defsym=APP_BASE=${APP_BASE}")
+add_custom_command(TARGET sysprobe-audio POST_BUILD
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/check_app.py" "$<TARGET_FILE:sysprobe-audio>"
+    VERBATIM)

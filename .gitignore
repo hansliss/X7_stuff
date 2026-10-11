@@ -8,3 +8,13 @@ SYSCFG.SYS
 **/__pycache__
 codex_resume.sh
 **/build
+/DOOM/
+/omega_race/
+/omegrace.zip
+/doomsav*.dsg
+/appprobe-*.txt
+/doom-x7-*.txt
+/omega-x7.txt
+
+# Out-of-tree CMake builds created by the documented commands.
+/build*/

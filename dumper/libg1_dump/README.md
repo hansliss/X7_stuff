@@ -74,7 +74,9 @@ passed. A temporary host mock (without target assembly/loader sections) checked
 64-file completion with 2176 one-tick delays, skipping all 64 completed files,
 a short write with no completion marker, missing NAND symbol and allocation
 failure. These checks do not emulate NAND, SD performance or watchdog service.
-The yield-enabled full dump has not yet been console tested.
+The later console result is recorded below; it reset after three completed files.
+The original dumper binary remains a preserved reference separate from the
+source-only CMake probe/game packages.
 
 ## Console result and bounded follow-up
 

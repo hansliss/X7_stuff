@@ -3,7 +3,16 @@
 #include <stdlib.h>
 #include "../dodeca_render.h"
 #include "../dodeca_mesh.h"
+#include "../hsv.h"
 static _Alignas(4) unsigned short buffer[DODECA_WIDTH*DODECA_HEIGHT];
+static int border_ok(unsigned short p,unsigned short bg){
+ if(p==bg)return 1;
+#ifdef PROBE_FRAGMENT
+ return p==hsv_gui_pixel(0xfff4c0);
+#else
+ return 0;
+#endif
+}
 static void preview(const char *path){
  FILE *f=fopen(path,"wb");unsigned i;assert(f);fprintf(f,"P6\n%d %d\n255\n",DODECA_WIDTH,DODECA_HEIGHT);
  for(i=0;i<DODECA_WIDTH*DODECA_HEIGHT;i++){
@@ -29,14 +38,31 @@ int main(int argc,char **argv){
 #else
  assert(dodeca_init(&dodeca_default_scene)==0);
 #endif
+#ifdef PROBE_FRAGMENT
+ {
+  struct vec a=dodeca_light_position(0),b=dodeca_light_position(256),c=dodeca_light_position(1024);
+  assert(a.x==bad.light_position.x&&a.y==bad.light_position.y&&a.z==bad.light_position.z);
+  assert(b.x==a.z&&b.y==a.y&&b.z==-a.x);
+  assert(c.x==a.x&&c.y==a.y&&c.z==a.z);
+ }
+#endif
  for(frame=0;frame<1200;frame++){
   unsigned count=dodeca_render(buffer,frame);assert(count>=3&&count<=6);
-  /* Every frame has a clear border, proving the update box contains it. */
-  for(i=0;i<DODECA_WIDTH;i++)assert(buffer[i]==buffer[0]&&buffer[(DODECA_HEIGHT-1)*DODECA_WIDTH+i]==buffer[0]);
-  for(i=0;i<DODECA_HEIGHT;i++)assert(buffer[i*DODECA_WIDTH]==buffer[0]&&buffer[i*DODECA_WIDTH+DODECA_WIDTH-1]==buffer[0]);
+  /* The object stays within its update box. Only the orbiting marker may cross a border. */
+  for(i=0;i<DODECA_WIDTH;i++){
+   assert(border_ok(buffer[i],buffer[0]));
+   assert(border_ok(buffer[(DODECA_HEIGHT-1)*DODECA_WIDTH+i],buffer[0]));
+  }
+  for(i=0;i<DODECA_HEIGHT;i++){
+   assert(border_ok(buffer[i*DODECA_WIDTH],buffer[0]));
+   assert(border_ok(buffer[i*DODECA_WIDTH+DODECA_WIDTH-1],buffer[0]));
+  }
   checksum=0;for(i=0;i<DODECA_WIDTH*DODECA_HEIGHT;i++)checksum=checksum*33+buffer[i];
   if(frame==0){first=checksum;if(argc>1)preview(argv[1]);}
   if(frame==40&&argc>2)preview(argv[2]);
+#ifdef PROBE_FRAGMENT
+  if(frame==256){assert(checksum!=first);if(argc>3)preview(argv[3]);}
+#endif
  }
  assert(first!=checksum);return 0;
 }

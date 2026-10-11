@@ -1,0 +1,9 @@
+/build*/
+__pycache__/
+*.app
+*.so
+*.o
+*.obj
+*.dis
+*.elfstruct
+*.pyc

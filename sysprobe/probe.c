@@ -1,10 +1,16 @@
 #include "app_abi.h"
 #ifdef PROBE_UI
 #include "ui_abi.h"
-#ifdef PROBE_DISCOVERY
+#ifdef PROBE_AUDIO
+#define LOG "/mnt/card/appprobe-audio.txt"
+#define START_LOG "/mnt/card/appprobe-audio-start-error.txt"
+#elif defined(PROBE_DISCOVERY)
 #include "discovery_config.h"
 #define LOG DISCOVERY_LOG
 #define START_LOG DISCOVERY_START_LOG
+#elif defined(PROBE_FRAGMENT)
+#define LOG "/mnt/card/appprobe-dodeca-fragment.txt"
+#define START_LOG "/mnt/card/appprobe-dodeca-fragment-start-error.txt"
 #elif defined(PROBE_FAST)
 #define LOG "/mnt/card/appprobe-dodeca-fast.txt"
 #define START_LOG "/mnt/card/appprobe-dodeca-fast-start-error.txt"
@@ -148,10 +154,14 @@ void *process_start(void *argument)
     log_fd = sys_open(LOG, X7_O_WRONLY | X7_O_CREAT | X7_O_TRUNC, 0600);
     if (log_fd < 0) { app_exit(0); return 0; }
 #ifdef PROBE_UI
-#ifdef PROBE_DISCOVERY
+#ifdef PROBE_AUDIO
+    record("X7 PCM audio probe v1", 1);
+#elif defined(PROBE_DISCOVERY)
     record("X7 default-font discovery " DISCOVERY_NAME " v1", 1);
 #elif defined(PROBE_DODECA)
-    #ifdef PROBE_FAST
+    #ifdef PROBE_FRAGMENT
+    record("X7 fragment framebuffer dodecahedron demo v1", 1);
+#elif defined(PROBE_FAST)
     record("X7 fast framebuffer dodecahedron demo v3", 3);
 #elif defined(PROBE_FB)
     record("X7 framebuffer dodecahedron demo v3", 3);

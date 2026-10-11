@@ -1,5 +1,19 @@
 # GUI and framebuffer investigation history
 
+This package is source-only. All current probe targets rebuilt successfully
+before cleanup; binaries and inspection reports are generated, not bundled.
+From the workspace root:
+
+```sh
+cmake -S sysprobe -B /tmp/x7-sysprobe-build
+cmake --build /tmp/x7-sysprobe-build --parallel
+```
+
+Console observations and earlier calculator-replacement instructions below
+remain historical evidence. DOOM and Omega now use their own launcher entries
+and `res/*` resource directories; that game result does not establish a new
+launch route for every probe.
+
 Current references: [GUI.md](GUI.md), [FRAMEBUFFER.md](FRAMEBUFFER.md), and
 [DEMOS.md](DEMOS.md). This file preserves the order of discoveries and older
 probe failures. Later console results supersede early uncertainty; version

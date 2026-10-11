@@ -1,6 +1,11 @@
 #include "dodeca_render.h"
 #include "hsv.h"
 #include "dodeca_mesh.h"
+#ifdef PROBE_FRAGMENT
+#include "fragment.h"
+static struct fragment_face shaded_faces[12];
+static const struct fragment_face *current_fragment_face;
+#endif
 const struct dodeca_scene dodeca_default_scene = {
     {3*1024,2*1024,6*1024}, {0,0,0}, {0,1024,0}, {-2*1024,3*1024,2*1024}, 300
 };
@@ -31,6 +36,9 @@ int dodeca_init(const struct dodeca_scene *config) {
  scene=*config;forward=normalize(sub(scene.look_at,scene.camera_position));
  right=normalize(cross(forward,scene.up));up=cross(right,forward);
  if(dot(forward,forward)<1000||dot(right,right)<1000)return -1;
+#ifdef PROBE_FRAGMENT
+ if(fragment_init(scene.camera_position,right,up,forward,scene.focal_length)<0)return -1;
+#endif
  return 0;
 }
 static struct vec rotate(struct vec a,unsigned frame) {
@@ -41,6 +49,17 @@ static struct vec rotate(struct vec a,unsigned frame) {
  s=sine[(frame+9)&255];c=sine[(frame+73)&255];
  x=(a.x*c-a.y*s)/1024;y=(a.x*s+a.y*c)/1024;a.x=x;a.y=y;return a;
 }
+#ifdef PROBE_FRAGMENT
+struct vec dodeca_light_position(unsigned phase){
+ unsigned angle=(phase/4)&255,fraction=phase&3;
+ int sn=(sine[angle]*(int)(4-fraction)+sine[(angle+1)&255]*(int)fraction)/4;
+ int cs=(sine[(angle+64)&255]*(int)(4-fraction)+sine[(angle+65)&255]*(int)fraction)/4;
+ struct vec p=scene.light_position;
+ p.x=(scene.light_position.x*cs+scene.light_position.z*sn)/1024;
+ p.z=(-scene.light_position.x*sn+scene.light_position.z*cs)/1024;
+ return p;
+}
+#endif
 static int project(struct vec a,struct point *p) {
  struct vec d=sub(a,scene.camera_position);int z=dot(d,forward);
  if(z<256)return 0;
@@ -59,7 +78,11 @@ static void triangle(unsigned short *pixels,struct point a,struct point b,struct
  struct point v[3]={a,b,c};int lo[3],hi[3],pos[3],step[3],i,y;
  int miny=maximum(0,minimum(a.y,minimum(b.y,c.y)));
  int maxy=minimum(DODECA_HEIGHT-1,maximum(a.y,maximum(b.y,c.y)));
+ #ifndef PROBE_FRAGMENT
  unsigned packed=(unsigned)color|((unsigned)color<<16);
+#else
+ (void)color;
+#endif
  if(!edge(a,b,c.x,c.y))return;
  for(i=0;i<3;i++){
   struct point p=v[i],q=v[(i+1)%3];
@@ -77,6 +100,9 @@ static void triangle(unsigned short *pixels,struct point a,struct point b,struct
   if(left>right)continue;
   x=maximum(0,(left+65535)>>16);last=minimum(DODECA_WIDTH-1,right>>16);
   if(x>last)continue;
+#ifdef PROBE_FRAGMENT
+  for(;x<=last;x++)pixels[y*DODECA_WIDTH+x]=fragment_pixel(current_fragment_face,x,y);
+#else
   if(x&1)pixels[y*DODECA_WIDTH+x++]=color;
   while(x+1<=last){
    /* Buffers are aligned and the row width is even. Use may_alias to keep
@@ -85,6 +111,7 @@ static void triangle(unsigned short *pixels,struct point a,struct point b,struct
    *(alias_u32 *)(pixels+y*DODECA_WIDTH+x)=packed;x+=2;
   }
   if(x<=last)pixels[y*DODECA_WIDTH+x]=color;
+#endif
  }
 }
 #else
@@ -114,6 +141,9 @@ static void line(unsigned short *p,struct point a,struct point b,unsigned short 
 unsigned dodeca_render(unsigned short *pixels,unsigned frame){
  struct vec world[20];struct point screen[20];
  unsigned order[12],count=0,i,j,y,x;int depths[12];unsigned short colors[12];
+#ifdef PROBE_FRAGMENT
+ struct vec moving_light=dodeca_light_position(frame);
+#endif
  #ifdef PROBE_FAST
  {
   typedef unsigned alias_u32 __attribute__((may_alias));
@@ -135,6 +165,9 @@ unsigned dodeca_render(unsigned short *pixels,unsigned frame){
   center.x/=5;center.y/=5;center.z/=5;
   normal=normalize(cross(sub(world[faces[i][1]],world[faces[i][0]]),sub(world[faces[i][2]],world[faces[i][0]])));
   if(dot(normal,sub(scene.camera_position,center))<=0)continue;
+#ifdef PROBE_FRAGMENT
+  fragment_prepare(&shaded_faces[i],i,normal,center,moving_light);
+#endif
   light=sub(scene.light_position,center);distance=dot(light,light);light=normalize(light);
   diffuse=maximum(0,dot(normal,light));
   /* Ambient 25%; Lambert diffuse with inverse-quadratic distance attenuation. */
@@ -146,10 +179,19 @@ unsigned dodeca_render(unsigned short *pixels,unsigned frame){
  }
  /* A convex object permits painter ordering after back-face removal. */
  for(i=1;i<count;i++){unsigned f=order[i],k=i;while(k&&depths[order[k-1]]<depths[f]){order[k]=order[k-1];k--;}order[k]=f;}
- for(i=0;i<count;i++){unsigned f=order[i];for(j=1;j<4;j++)triangle(pixels,screen[faces[f][0]],screen[faces[f][j]],screen[faces[f][j+1]],colors[f]);}
+ for(i=0;i<count;i++){unsigned f=order[i];
+#ifdef PROBE_FRAGMENT
+  current_fragment_face=&shaded_faces[f];
+#endif
+  for(j=1;j<4;j++)triangle(pixels,screen[faces[f][0]],screen[faces[f][j]],screen[faces[f][j+1]],colors[f]);}
  for(i=0;i<count;i++){unsigned f=order[i];for(j=0;j<5;j++)line(pixels,screen[faces[f][j]],screen[faces[f][(j+1)%5]],hsv_gui_pixel(0x182030));}
  {
-  struct point bulb;if(project(scene.light_position,&bulb)){
+  struct point bulb;
+#ifdef PROBE_FRAGMENT
+  if(project(moving_light,&bulb)){
+#else
+  if(project(scene.light_position,&bulb)){
+#endif
    int dx,dy;for(dy=-4;dy<=4;dy++)for(dx=-4;dx<=4;dx++)if(dx*dx+dy*dy<=16)pixel(pixels,bulb.x+dx,bulb.y+dy,hsv_gui_pixel(0xfff4c0));
   }
  }

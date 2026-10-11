@@ -77,3 +77,17 @@ python3 check_app.py sysprobe-dodeca-fb.app
 mips-linux-gnu-readelf -h -l -S sysprobe-dodeca-fast.app > sysprobe-dodeca-fast.elfstruct
 mips-linux-gnu-objdump -d sysprobe-dodeca-fast.app > sysprobe-dodeca-fast.dis
 python3 check_app.py sysprobe-dodeca-fast.app
+
+"$compiler" "${flags[@]}" -DPROBE_UI=1 -DPROBE_DODECA=1 -DPROBE_FB=1 -DPROBE_FAST=1 -DPROBE_FRAGMENT=1 -nostdlib -no-pie \
+    crt.c probe.c app_stubs.S fb_video.c dodeca_demo.c dodeca_render.c fragment.c ui_stubs.S hsv.c syscalls.o \
+    -T app.xn -Wl,--defsym=APP_BASE="$app_base",--build-id=none,-n -o sysprobe-dodeca-fragment.app
+mips-linux-gnu-readelf -h -l -S sysprobe-dodeca-fragment.app > sysprobe-dodeca-fragment.elfstruct
+mips-linux-gnu-objdump -d sysprobe-dodeca-fragment.app > sysprobe-dodeca-fragment.dis
+python3 check_app.py sysprobe-dodeca-fragment.app
+
+"$compiler" "${flags[@]}" -DPROBE_UI=1 -DPROBE_AUDIO=1 -nostdlib -no-pie \
+    crt.c probe.c app_stubs.S audio_probe.c audio_stubs.S ui_stubs.S syscalls.o \
+    -T app.xn -Wl,--defsym=APP_BASE="$app_base",--build-id=none,-n -o sysprobe-audio.app
+mips-linux-gnu-readelf -h -l -S sysprobe-audio.app > sysprobe-audio.elfstruct
+mips-linux-gnu-objdump -d sysprobe-audio.app > sysprobe-audio.dis
+python3 check_app.py sysprobe-audio.app

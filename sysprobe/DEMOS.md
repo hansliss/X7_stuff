@@ -1,5 +1,19 @@
 # Rendering demos and console findings
 
+This package is source-only. All current probe targets rebuilt successfully
+before cleanup; binaries and inspection reports are generated, not bundled.
+From the workspace root:
+
+```sh
+cmake -S sysprobe -B /tmp/x7-sysprobe-build
+cmake --build /tmp/x7-sysprobe-build --parallel
+```
+
+Console observations and earlier calculator-replacement instructions below
+remain historical evidence. DOOM and Omega now use their own launcher entries
+and `res/*` resource directories; that game result does not establish a new
+launch route for every probe.
+
 Use [GUI.md](GUI.md) for the window/text/button ABI and
 [FRAMEBUFFER.md](FRAMEBUFFER.md) for driver calls and buffer ownership.
 [UI-notes.md](UI-notes.md) retains the earlier experiment history.
@@ -25,7 +39,9 @@ CMake output is `build/sysprobe/sysprobe-dodeca-fast.app`; shell output is
 `sysprobe/sysprobe-dodeca-fast.app`. Standalone package builds also work:
 `cmake -S sysprobe -B build-sysprobe`, then build the chosen target there.
 The **latest working fast binary identifies itself as fast v3** in its log.
-Ready-built binaries, disassemblies and ELF reports are beside the sources.
+No prebuilt binaries or inspection reports are shipped. CMake generates them
+in the build directory; the legacy shell script regenerates ignored outputs
+next to the sources.
 
 | Binary / target | Display path | Console log under `/mnt/card/` |
 | --- | --- | --- |
@@ -36,6 +52,7 @@ Ready-built binaries, disassemblies and ELF reports are beside the sources.
 | `sysprobe-bitmap.app` | full-screen packed-pixel HSV bitmap | `appprobe-bitmap.txt` |
 | `sysprobe-dodeca.app` | current GUI bitmap demo v2, centered 240×224 update | `appprobe-dodeca.txt` |
 | `sysprobe-dodeca-fb.app` | native 480×272 video demo, framebuffer v3 | `appprobe-dodeca-fb.txt` |
+| `sysprobe-dodeca-fragment.app` | per-pixel point lighting with slow Y-axis light orbit | `appprobe-dodeca-fragment.txt` |
 | `sysprobe-dodeca-fast.app` | enlarged native video, optimized and guarded, fast v3 | `appprobe-dodeca-fast.txt` |
 
 Default-font candidates are commonui, fusion, style, apconfig and all. They are
@@ -69,9 +86,8 @@ Camera inputs are bounded; degenerate direction/up are rejected. This small
 renderer rejects frames with vertices too close to the camera rather than
 implementing polygon near-plane clipping. The scene is chosen so it does not
 need that clipping. The larger projection remains within all four screen
-borders throughout 1200 tested rotation frames. Previews
-[dodeca-preview.png](dodeca-preview.png) and
-[dodeca-fast-preview.png](dodeca-fast-preview.png) are host renders.
+borders throughout 1200 tested rotation frames. The generated `dodeca-preview.png` and `dodeca-fast-preview.png` are host
+renders; these build artifacts may be absent after cleanup.
 
 The bitmap version updates a 240×224 box at `(120,24)`, with a solid background
 on the rest of the 480×272 window. Video variants render full native frames.
@@ -178,3 +194,17 @@ timer catch-up/quantization, tick-to-wall-time conversion, cache translation,
 and the untested GUI/font/video modes catalogued in the two API references.
 The current working buffer guard and bounded message-loop callbacks should be
 preserved while investigating those questions.
+
+## Fragment-shaded follow-up
+
+[FRAGMENT.md](FRAGMENT.md) describes `sysprobe-dodeca-fragment.app`, which
+uses perspective-correct per-pixel point lighting and a slowly orbiting light.
+It keeps the enlarged object and protected video buffers, and has no automatic
+timeout or frame cap. The supplied shared source now has its exit timer
+commented out by the user; the timeouts in the historical results above describe
+those earlier runs, not that current source modification. The existing fast
+variant still has its frame guard. The fragment variant passes builds and host
+checks. The first console run worked at a user-estimated 15 FPS, with visible
+color banding. It recorded 571 measured-loop frames, 4040 loop ticks, 3081
+render ticks and 37 submission ticks, with START exit and successful cleanup.
+See [FRAGMENT.md](FRAGMENT.md) for the detailed result.

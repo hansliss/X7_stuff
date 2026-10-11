@@ -110,6 +110,14 @@ if 'ui_create_window' in symbols:
             assert at(b, loads, addr, size) == at(raw, segs, syms[vendor_name][0], size), name
     print('Checked all 24 UI stubs against named vendor app stubs.')
 
+# Playable input control must match the named vendor emulator stub.
+if 'x7_forbid_key_mapping' in symbols:
+    raw, _, segs, syms = read_elf(root / 'binaries/emulator.app')
+    addr, size = symbols['x7_forbid_key_mapping']
+    assert size == 12
+    assert at(b, loads, addr, size) == at(raw, segs, syms['sys_forbid_key_mapping'][0], size)
+    print('Checked key-mapping control against emulator.app.')
+
 # Fixed-address apps cannot be treated as freely relocatable shared objects.
 # Reject overlaps with any load segment in the supplied firmware ELF set.
 for p in (root / 'binaries').iterdir():

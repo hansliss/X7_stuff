@@ -57,7 +57,9 @@ static void render_frame(void *arg){
 #endif
  busy=0;
 #ifdef PROBE_FAST
+#ifndef PROBE_FRAGMENT
  if(frames>=12000)finish(4);
+#endif
 #else
  OSTimeDly(1);
  if(frames>=1200)finish(4);
@@ -119,6 +121,9 @@ int ui_probe_run(int (*record)(const char *,x7_u64),int (*before)(const char *))
  ui_register_dispatcher(system_message);registered=1;
  #ifdef PROBE_FAST
  record("projection scale percent",175);
+#ifdef PROBE_FRAGMENT
+ record("fragment shading",1);record("light orbit phase period",1024);record("automatic timeout enabled",0);
+#endif
  if(!before("BEFORE frame timer 1ms bounded batches"))goto out;
  frame_timer=ui_set_timer(1,animate,0);
 #else
@@ -126,7 +131,9 @@ int ui_probe_run(int (*record)(const char *,x7_u64),int (*before)(const char *))
  frame_timer=ui_set_timer(10,animate,0);
 #endif
  record("frame timer",(x7_u64)(x7_s64)frame_timer);if(frame_timer<0)goto out;
+#ifndef PROBE_FRAGMENT
  if(!before("BEFORE exit timer 30000ms"))goto out;
+#endif
  //exit_timer=ui_set_timer(30000,timeout,0);record("exit timer",(x7_u64)(x7_s64)exit_timer);if(exit_timer<0)goto out;
  if(!before("BEFORE animation loop"))goto out;
  #ifdef PROBE_FAST

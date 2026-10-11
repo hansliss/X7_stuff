@@ -1,0 +1,12 @@
+/build*/
+/headers/
+*.app.dis
+*.app.elfstruct
+*.dis
+*.elfstruct
+*.o
+__pycache__/
+*.app
+*.so
+*.obj
+*.pyc

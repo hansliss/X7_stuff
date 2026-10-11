@@ -1,0 +1,11 @@
+Omega Race set 1: user-supplied files, verified against the MAME driver.
+
+Filename        Bytes CRC32
+omega.m7         4096 0424d46e
+omega.l7         4096 edcd7a7d
+omega.k7         4096 6d10f197
+omega.j7         4096 8e8d4b54
+omega.e1         2048 1d0fdf3a
+omega.f1         2048 d44c0814
+sound.k5         2048 7d426017
+dvgprom.bin       256 d481e958

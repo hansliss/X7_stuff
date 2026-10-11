@@ -1,5 +1,19 @@
 # X7 application probes and demos
 
+This package is source-only. All current probe targets rebuilt successfully
+before cleanup; binaries and inspection reports are generated, not bundled.
+From the workspace root:
+
+```sh
+cmake -S sysprobe -B /tmp/x7-sysprobe-build
+cmake --build /tmp/x7-sysprobe-build --parallel
+```
+
+Console observations and earlier calculator-replacement instructions below
+remain historical evidence. DOOM and Omega now use their own launcher entries
+and `res/*` resource directories; that game result does not establish a new
+launch route for every probe.
+
 The current API references are [GUI.md](GUI.md) for windows, text, fonts,
 buttons and messages, and [FRAMEBUFFER.md](FRAMEBUFFER.md) for video ioctls,
 buffers and shutdown. [DEMOS.md](DEMOS.md) collects build/run instructions,
@@ -8,11 +22,18 @@ retains the experimental history. Root [syscalls.md](../syscalls.md) covers
 the filesystem/kernel dispatch tables; [libg1 notes](../libg1_probe/README.md)
 cover the replacement library and watchdog investigation.
 
-The latest working rendering demo is **sysprobe-dodeca-fast.app, fast v3**:
+The new [fragment-shaded orbiting-light demo](FRAGMENT.md) is
+**sysprobe-dodeca-fragment.app**. It retains the 175% scale and framebuffer
+guard, evaluates point lighting per pixel, and runs until START/quit/error with
+no automatic timeout or frame cap. It is console verified, with a user-estimated 15 FPS, visible color banding,
+working START exit and successful cleanup. See [FRAGMENT.md](FRAGMENT.md) for
+raw timings and their limits.
+
+The latest console-verified rendering demo is **sysprobe-dodeca-fast.app, fast v3**:
 175% projected size, elapsed-time rotation, optimized span filling, no explicit
 per-frame sleep, and guarded framebuffer reuse. It is console verified with
 no startup noise and clean menu return. The GUI bitmap and base framebuffer
-versions remain comparison binaries. All source-package binaries can be
+versions remain rebuildable comparison targets. All current variants can be
 rebuilt with `sysprobe/build.sh` or their corresponding CMake targets.
 
 The sections below include earlier probe generations. Version numbers are
@@ -471,8 +492,7 @@ adding this lifecycle sequence restores normal exit on the tested console.
 This probe still omits resource loading, graphical scenes, and message loops.
 Launching, worker execution, and a clean return to the tools menu are now
 console-verified when installed as `calculat.app`. Browser-menu launching did
-not work and is not claimed to be supported. The previous binary is retained as
-`sysprobe-v1.app`. The log identifies the new binary as v2.
+not work and is not claimed to be supported. The previous `sysprobe-v1.app` is historical and no longer bundled. The log identifies the new binary as v2.
 
 If init returns, cleanup always calls quit even when logging fails.
 `BEFORE applib_quit` without `RETURNED applib_quit` identifies quit or the
@@ -616,3 +636,6 @@ Fast v3 is console verified: constant-speed enlarged rotation and no startup
 noise band. The final run rejected 3683 protected buffer candidates, with no
 unavailable buffers or query failures. Display shutdown and pool freeing
 succeeded; no assertion failures. This is the latest working fast demo.
+
+For the short emulator-based PCM sound test, see [AUDIO.md](AUDIO.md) and
+launch `sysprobe-audio.app`.

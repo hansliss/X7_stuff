@@ -1,6 +1,20 @@
 # Limited syscall probe
 
-`libg1.so` is the ready-built filesystem probe. Install it through the same
+This package is source-only. All current probe targets rebuilt successfully
+before cleanup; binaries and inspection reports are generated, not bundled.
+From the workspace root:
+
+```sh
+cmake -S libg1_probe -B /tmp/x7-libg1-build
+cmake --build /tmp/x7-libg1-build --parallel
+```
+
+Console observations and earlier calculator-replacement instructions below
+remain historical evidence. DOOM and Omega now use their own launcher entries
+and `res/*` resource directories; that game result does not establish a new
+launch route for every probe.
+
+`libg1.so` is the build output for the filesystem probe. Install it through the same
 mechanism as the existing dumper modules, under the name `libg1.so`. It runs once
 from `_init`, writes `/mnt/card/sysprobe-fs.txt`, and returns. It does not run an
 emulator or wait for input. Start with this variant.

@@ -1,10 +1,24 @@
 # X7 framebuffer and video presentation
 
+This package is source-only. All current probe targets rebuilt successfully
+before cleanup; binaries and inspection reports are generated, not bundled.
+From the workspace root:
+
+```sh
+cmake -S sysprobe -B /tmp/x7-sysprobe-build
+cmake --build /tmp/x7-sysprobe-build --parallel
+```
+
+Console observations and earlier calculator-replacement instructions below
+remain historical evidence. DOOM and Omega now use their own launcher entries
+and `res/*` resource directories; that game result does not establish a new
+launch route for every probe.
+
 The working native video path is implemented in [fb_video.c](fb_video.c) and
 [fb_video.h](fb_video.h). The latest console-verified example is
 `sysprobe-dodeca-fast.app` **fast v3**, with guarded buffer reuse, constant
 rotation and a 175% projection scale. The slower `sysprobe-dodeca-fb.app`
-**framebuffer v3** remains available for comparison. These version numbers
+**framebuffer v3** remains a rebuildable comparison target. These version numbers
 refer to two different binaries. [GUI.md](GUI.md) describes input/lifecycle;
 [DEMOS.md](DEMOS.md) records results and timing limitations.
 

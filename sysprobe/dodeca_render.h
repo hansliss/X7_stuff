@@ -21,5 +21,8 @@ struct dodeca_scene {
 };
 extern const struct dodeca_scene dodeca_default_scene;
 int dodeca_init(const struct dodeca_scene *scene);
+#ifdef PROBE_FRAGMENT
+struct vec dodeca_light_position(unsigned phase);
+#endif
 unsigned dodeca_render(unsigned short *pixels, unsigned frame);
 #endif

@@ -7,3 +7,8 @@ project(x7_probes LANGUAGES C ASM)
 include(cmake/X7Probe.cmake)
 add_subdirectory(libg1_probe)
 add_subdirectory(sysprobe)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/DOOM/linuxdoom-1.10/d_main.c")
+    add_subdirectory(doom_x7)
+endif()
+
+add_subdirectory(omega_x7)
